@@ -20,10 +20,6 @@ library(gridExtra)
 library(grid)
 library(cowplot)
 
-# load Google font for visualisations
-font_add_google("Noto Serif", "Noto Serif")
-showtext_auto() 
-
 # format the data from {janeaustenr} for analysis
 tidy_books <- austen_books() %>%
   group_by(book) %>%
@@ -35,7 +31,7 @@ tidy_books <- austen_books() %>%
   ungroup() %>%
   unnest_tokens(word, text)
 
-# import NRC Emotion Lexicon
+# import NRC Word-Emotion Association Sentiment Lexicon
 nrc_all <- get_sentiments("nrc")
 
 # list of unique emotions
@@ -83,6 +79,10 @@ all_books_byline_dt$value <- 1
 all_books_byline_dt <- all_books_byline_dt %>% 
   group_by(book, emotion) %>% 
   mutate(test = n() / value)
+
+# load Google font for visualisations
+font_add_google("Noto Serif", "Noto Serif")
+showtext_auto() 
 
 # create custom colour palette
 pal <- c("joy" = "#6b9a3e", 
@@ -248,7 +248,7 @@ hist <- ggplot(leg, aes(x = EMOTION, y = value, fill = EMOTION)) +
         axis.ticks = element_blank(),
         text=element_text(family="Noto Serif", face = "bold", color = "#69543f"))
 
-# combine all the plots into one
+# combine all the plots into grid
 plot <- plot_grid(hist, sense_p, emma_p, north_p, mansfield_p, pride_p, nrow = 6, rel_heights = c(1.2, 1, 1, 1, 1, 1))
 
 # save the plot
