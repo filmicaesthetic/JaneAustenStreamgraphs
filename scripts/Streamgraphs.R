@@ -1,7 +1,11 @@
 ###########
-# Jane Austen sentiment streamgraphs
+#
+# Analysis of the emotion of language used in Jane Austen novels,
+# using the NRC Emotion Lexicon.
+#
 ###########
 
+# load packages
 library(plyr)
 library(stringr)
 library(data.table)
@@ -16,12 +20,11 @@ library(gridExtra)
 library(grid)
 library(cowplot)
 
+# load Google font for visualisations
 font_add_google("Noto Serif", "Noto Serif")
-
 showtext_auto() 
 
-nrc_all <- get_sentiments("nrc")
-
+# format the data from {janeaustenr} for analysis
 tidy_books <- austen_books() %>%
   group_by(book) %>%
   mutate(
@@ -32,9 +35,14 @@ tidy_books <- austen_books() %>%
   ungroup() %>%
   unnest_tokens(word, text)
 
+# import NRC Emotion Lexicon
+nrc_all <- get_sentiments("nrc")
+
+# list of unique emotions
 sentiments <- unique(nrc_all$sentiment)
 
-sense <- tidy_books %>% 
+# identify words that appear in the emotion lexicon
+all_books <- tidy_books %>% 
   filter() %>%
   mutate(joy = as.numeric(word %in% nrc_all$word[nrc_all$sentiment == "joy"]),
          trust = as.numeric(word %in% nrc_all$word[nrc_all$sentiment == "trust"]),
@@ -45,25 +53,38 @@ sense <- tidy_books %>%
          anger = as.numeric(word %in% nrc_all$word[nrc_all$sentiment == "anger"]),
          disgust = as.numeric(word %in% nrc_all$word[nrc_all$sentiment == "disgust"]))
 
-sense_long <- melt(setDT(sense), id.vars = c("book","linenumber","chapter","word"), variable.name = "emotion")
-sense_long_10 <- sense_long %>% mutate(linenumber = round_any(linenumber, 30, f = ceiling))
+# reshape the data frame
+all_books_long <- melt(setDT(all_books), id.vars = c("book","linenumber","chapter","word"), variable.name = "emotion")
+# round lines to nearest 30 (approximately 1 page) to help remove noise
+all_books_long_10 <- all_books_long %>% mutate(linenumber = round_any(linenumber, 30, f = ceiling))
 
-sense_byline <- sense_long_10 %>% 
+# aggregate by "linenumber" groups
+all_books_byline <- all_books_long_10 %>% 
   group_by(book, linenumber, emotion) %>% 
   summarise(value = sum(value)) %>% 
   filter(value > 0) %>% 
   group_by(book, linenumber) %>% 
   mutate(test = value / sum(value) * n())
-sense_byline <- sense_byline %>% group_by(book) %>% mutate(id = row_number())
 
-sense_byline_dt <- sense_byline %>% mutate(book_line = paste0(book, linenumber))
-sense_byline_dt <- as.data.table(sense_byline_dt)
-sense_byline_dt <- sense_byline_dt[sense_byline_dt[, .I[value >= max( value[value!=max(value)] )], by=book_line]$V1]
-sense_byline_dt$value <- 1
-sense_byline_dt <- sense_byline_dt %>% 
+# add ids for each book
+all_books_byline <- all_books_byline %>% group_by(book) %>% mutate(id = row_number())
+
+# add unique identifier
+all_books_byline_dt <- all_books_byline %>% mutate(book_line = paste0(book, linenumber))
+all_books_byline_dt <- as.data.table(all_books_byline_dt)
+
+# identify the 2 most common emotions in each linenumber group
+all_books_byline_dt <- all_books_byline_dt[all_books_byline_dt[, .I[value >= max( value[value!=max(value)] )], by=book_line]$V1]
+
+# apply an equal value to these emotions
+all_books_byline_dt$value <- 1
+
+# apply calculation to adjust appearance of the streamgraph and remove extreme spikes
+all_books_byline_dt <- all_books_byline_dt %>% 
   group_by(book, emotion) %>% 
   mutate(test = n() / value)
 
+# create custom colour palette
 pal <- c("joy" = "#6b9a3e", 
          "trust" = "#25654d", 
          "surprise" = "#efd041", 
@@ -73,8 +94,8 @@ pal <- c("joy" = "#6b9a3e",
          "anger" = "#9b262c", 
          "disgust" = "#807094")
 
-
-sense_p <- sense_byline_dt %>% filter(book == "Sense & Sensibility") %>%
+# create plot for Sense & Sensibility
+sense_p <- all_books_byline_dt %>% filter(book == "Sense & Sensibility") %>%
   ggplot(aes(x = id, y = test)) +
   geom_stream(bw = 0.6, n_grid = 16561, aes(fill = emotion), alpha = 0.96) +
   scale_fill_manual(values = pal) +
@@ -97,7 +118,8 @@ sense_p <- sense_byline_dt %>% filter(book == "Sense & Sensibility") %>%
         axis.ticks = element_blank(),
         text=element_text(family = "Noto Serif", face = "bold", color = "#69543f"))
 
-emma_p <- sense_byline_dt %>% filter(book == "Emma") %>%
+# create plot for Emma
+emma_p <- all_books_byline_dt %>% filter(book == "Emma") %>%
   ggplot(aes(x = id, y = test)) +
   geom_stream(bw = 0.6, n_grid = 16561, aes(fill = emotion), alpha = 0.96) +
   scale_fill_manual(values = pal) +
@@ -120,7 +142,8 @@ emma_p <- sense_byline_dt %>% filter(book == "Emma") %>%
         axis.ticks = element_blank(),
         text=element_text(family = "Noto Serif", face = "bold", color = "#69543f"))
 
-north_p <- sense_byline_dt %>% filter(book == "Northanger Abbey") %>%
+# create plot for Northanger Abbey
+north_p <- all_books_byline_dt %>% filter(book == "Northanger Abbey") %>%
   ggplot(aes(x = id, y = test)) +
   geom_stream(bw = 0.6, n_grid = 16561, aes(fill = emotion), alpha = 0.96) +
   scale_fill_manual(values = pal) +
@@ -143,7 +166,8 @@ north_p <- sense_byline_dt %>% filter(book == "Northanger Abbey") %>%
         axis.ticks = element_blank(),
         text=element_text(family = "Noto Serif", face = "bold", color = "#69543f"))
 
-mansfield_p <- sense_byline_dt %>% filter(book == "Mansfield Park") %>%
+# create plot for Mansfield Park
+mansfield_p <- all_books_byline_dt %>% filter(book == "Mansfield Park") %>%
   ggplot(aes(x = id, y = test)) +
   geom_stream(bw = 0.6, n_grid = 16561, aes(fill = emotion), alpha = 0.96) +
   scale_fill_manual(values = pal) +
@@ -166,7 +190,8 @@ mansfield_p <- sense_byline_dt %>% filter(book == "Mansfield Park") %>%
         axis.ticks = element_blank(),
         text=element_text(family = "Noto Serif", face = "bold", color = "#69543f"))
 
-pride_p <- sense_byline_dt %>% filter(book == "Pride & Prejudice") %>%
+# create plot for Pride & Prejudice
+pride_p <- all_books_byline_dt %>% filter(book == "Pride & Prejudice") %>%
   ggplot(aes(x = id, y = test)) +
   geom_stream(bw = 0.6, n_grid = 16561, aes(fill = emotion), alpha = 0.96) +
   scale_fill_manual(values = pal) +
@@ -190,11 +215,11 @@ pride_p <- sense_byline_dt %>% filter(book == "Pride & Prejudice") %>%
         axis.ticks = element_blank(),
         text=element_text(family = "Noto Serif", face = "bold", color = "#69543f"))
 
-# build legend with bar chart
+# build styled legend with a bar chart
 leg <- data.frame(EMOTION = as.factor(c("joy", "trust", "surprise", "anticipation", "sadness", "fear", "anger", "disgust")), value = c(1, 1, 1, 1, 1, 1, 1, 1))
 leg$EMOTION <- factor(leg$EMOTION, levels = leg$EMOTION)
 
-# legend plot
+# plot legend
 hist <- ggplot(leg, aes(x = EMOTION, y = value, fill = EMOTION)) + 
   geom_bar(stat = "identity") +
   geom_text(aes(y = 0.502, label = toupper(EMOTION)), angle = 90, family = "Noto Serif", color = c("#b07e13", "#f2ddb1", "#b07e13", "#f2ddb1", "#b07e13", "#b07e13", "#f2ddb1", "#b07e13"),  size = 8) +
@@ -223,6 +248,8 @@ hist <- ggplot(leg, aes(x = EMOTION, y = value, fill = EMOTION)) +
         axis.ticks = element_blank(),
         text=element_text(family="Noto Serif", face = "bold", color = "#69543f"))
 
+# combine all the plots into one
 plot <- plot_grid(hist, sense_p, emma_p, north_p, mansfield_p, pride_p, nrow = 6, rel_heights = c(1.2, 1, 1, 1, 1, 1))
 
+# save the plot
 ggsave("JaneAusten.png", plot = plot, dpi = 300, width = 13, height = 20, units = "cm")
