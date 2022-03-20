@@ -15,6 +15,12 @@ journey in each novel with a single visualisation.
 
 ![](README_files/figure-gfm/main_plot-1.png)<!-- -->
 
+## Files
+
+‘the_emotions_of_jane_austen.R’ :
+<a href="https://github.com/filmicaesthetic/JaneAustenStreamgraphs/blob/main/scripts/the_emotions_of_jane_austen.R">view
+code</a>
+
 ## Process
 
 -   Load the NRC Word-Emotion Association Lexicon and Jane Austen novels

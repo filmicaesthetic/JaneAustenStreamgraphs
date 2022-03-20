@@ -264,6 +264,10 @@ The project aims to capture a visual interpretation of the emotional journey in 
 plot
 ```
 
+## Files
+
+'the_emotions_of_jane_austen.R' : <a href="https://github.com/filmicaesthetic/JaneAustenStreamgraphs/blob/main/scripts/the_emotions_of_jane_austen.R">view code</a>
+
 ## Process
 
 * Load the NRC Word-Emotion Association Lexicon and Jane Austen novels datasets and prepare for further analysis.
