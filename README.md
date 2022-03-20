@@ -1,18 +1,17 @@
 The Emotions of Jane Austen
 ================
 
-This was a personal project to explore the
-<a href="https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm">NRC
-Word-Emotion Association Lexicon</a> by Saif Mohammad - the lexicon can
-be used to identify words with a range of emotions: joy, trust,
-surprise, anticipation, sadness, fear, anger, and disgust. I decided to
-analyse the literature of Jane Austen’s novels, provided by Julia
-Silge’s
+This personal project explores the literature of Jane Austen novels,
+provided by Julia Silge’s
 <a href="https://github.com/juliasilge/janeaustenr">janeaustenr</a>
-package in R.
+package in R, using the
+<a href="https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm">NRC
+Word-Emotion Association Lexicon</a> by Saif Mohammad. The lexicon is
+used to identify words associated with a range of 8 emotions: joy,
+trust, surprise, anticipation, sadness, fear, anger, and disgust.
 
-The goal of the project was to capture an interpretation of the
-emotional journey in each novel with a single visualisation.
+The project aims to capture a visual interpretation of the emotional
+journey in each novel with a single visualisation.
 
 ![](README_files/figure-gfm/main_plot-1.png)<!-- -->
 
